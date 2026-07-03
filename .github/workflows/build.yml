@@ -4,6 +4,9 @@ on: push
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        profile: [development, preview, production]
 
     steps:
       - uses: actions/checkout@v4
@@ -19,9 +22,9 @@ jobs:
         with:
           expo-token: ${{ secrets.EXPO_TOKEN }}
           platform: android
-          profile: production
+          profile: ${{ matrix.profile }}
 
       - uses: actions/upload-artifact@v4
         with:
-          name: android-build
+          name: android-build-${{ matrix.profile }}
           path: ${{ steps.build.outputs.build-path }}
