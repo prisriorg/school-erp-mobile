@@ -3,7 +3,8 @@ on: push
 
 jobs:
   build:
-    runs-on: macos-26
+    runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -17,10 +18,10 @@ jobs:
         id: build
         with:
           expo-token: ${{ secrets.EXPO_TOKEN }}
-          platform: ios
+          platform: android
           profile: production
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ios-build
+          name: android-build
           path: ${{ steps.build.outputs.build-path }}
