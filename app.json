@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "expo-git-build",
-    "slug": "expo-git-build",
+    "name": "school-erp",
+    "slug": "school-erp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "expogitbuild",
+    "scheme": "schoolepr",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"
@@ -18,7 +18,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.prisri.expogitbuild"
+      "package": "com.prisri.schoolepr"
     },
     "web": {
       "output": "static",

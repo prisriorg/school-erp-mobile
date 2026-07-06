@@ -7,20 +7,51 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
+// Monochrome Palette
+const palette = {
+  white: '#FFFFFF',
+  gray100: '#F5F5F5',
+  gray200: '#EEEEEE',
+  gray300: '#E0E0E0',
+  gray400: '#BDBDBD',
+  gray500: '#9E9E9E',
+  gray600: '#757575',
+  gray700: '#616161',
+  gray800: '#424242',
+  gray900: '#212121',
+  black: '#000000',
+};
+
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    text: palette.black,
+    textSecondary: palette.gray700,
+    textMuted: palette.gray500,
+    background: palette.white,
+    backgroundElement: palette.gray100,
+    backgroundSelected: palette.gray200,
+    border: palette.gray300,
+    borderSelected: palette.gray900,
+    icon: palette.black,
+    iconSecondary: palette.gray700,
+    primary: palette.black,
+    primaryForeground: palette.white,
+    link: palette.gray900,
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: palette.white,
+    textSecondary: palette.gray400,
+    textMuted: palette.gray600,
+    background: palette.black,
+    backgroundElement: palette.gray900,
+    backgroundSelected: palette.gray800,
+    border: palette.gray800,
+    borderSelected: palette.white,
+    icon: palette.white,
+    iconSecondary: palette.gray400,
+    primary: palette.white,
+    primaryForeground: palette.black,
+    link: palette.white,
   },
 } as const;
 

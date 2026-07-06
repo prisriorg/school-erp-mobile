@@ -14,7 +14,11 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
   return (
     <Text
       style={[
-        { color: theme[themeColor ?? 'text'] },
+        {
+          color: theme[
+            themeColor ?? (type === 'link' || type === 'linkPrimary' ? 'link' : 'text')
+          ],
+        },
         type === 'default' && styles.default,
         type === 'title' && styles.title,
         type === 'small' && styles.small,
@@ -59,11 +63,13 @@ const styles = StyleSheet.create({
   link: {
     lineHeight: 30,
     fontSize: 14,
+    textDecorationLine: 'underline',
   },
   linkPrimary: {
     lineHeight: 30,
     fontSize: 14,
-    color: '#3c87f7',
+    textDecorationLine: 'underline',
+    fontWeight: 600,
   },
   code: {
     fontFamily: Fonts.mono,
