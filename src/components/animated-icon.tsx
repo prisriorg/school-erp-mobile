@@ -146,12 +146,12 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   gradientLayer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     experimental_backgroundImage: `linear-gradient(180deg, #616161, #212121)`,
     borderRadius: 8,
   },
   gradientOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderRadius: 8,
     backgroundColor: '#000000',
   },

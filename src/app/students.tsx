@@ -14,14 +14,14 @@ import { ThemedView } from "@/components/themed-view";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useAuthStore } from "@/store/authStore";
+import { usePermission } from "@/hooks/usePermission";
 import { api } from "@/lib/api";
 
 export default function StudentsScreen() {
-  const user = useAuthStore((state) => state.user);
   const theme = useTheme();
-  const isAdmin = ["admin", "manager", "principal"].includes(
-    user?.role || "",
-  );
+  const { hasPermission } = usePermission();
+  const canViewStudents = hasPermission("STUDENTS.PROFILE.VIEW");
+  const canAddStudent = hasPermission("STUDENTS.PROFILE.CREATE");
 
   const [students, setStudents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,6 +36,76 @@ export default function StudentsScreen() {
   const [newLastName, setNewLastName] = useState("");
   const [newAdmissionNumber, setNewAdmissionNumber] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
+  const validateForm = () => {
+    const errs: Record<string, string> = {};
+
+    if (!newEmail.trim()) {
+      errs.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail.trim())) {
+      errs.email = "Please enter a valid email address";
+    }
+
+    if (!newFirstName.trim()) {
+      errs.firstName = "First name is required";
+    } else if (newFirstName.trim().length < 2) {
+      errs.firstName = "First name must be at least 2 characters";
+    }
+
+    if (!newLastName.trim()) {
+      errs.lastName = "Last name is required";
+    } else if (newLastName.trim().length < 2) {
+      errs.lastName = "Last name must be at least 2 characters";
+    }
+
+    if (!newAdmissionNumber.trim()) {
+      errs.admissionNumber = "Admission number is required";
+    }
+
+    setValidationErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const handleEmailChange = (text: string) => {
+    setNewEmail(text);
+    if (validationErrors.email) {
+      setValidationErrors((prev) => {
+        const { email, ...rest } = prev;
+        return rest;
+      });
+    }
+  };
+
+  const handleFirstNameChange = (text: string) => {
+    setNewFirstName(text);
+    if (validationErrors.firstName) {
+      setValidationErrors((prev) => {
+        const { firstName, ...rest } = prev;
+        return rest;
+      });
+    }
+  };
+
+  const handleLastNameChange = (text: string) => {
+    setNewLastName(text);
+    if (validationErrors.lastName) {
+      setValidationErrors((prev) => {
+        const { lastName, ...rest } = prev;
+        return rest;
+      });
+    }
+  };
+
+  const handleAdmissionNumberChange = (text: string) => {
+    setNewAdmissionNumber(text);
+    if (validationErrors.admissionNumber) {
+      setValidationErrors((prev) => {
+        const { admissionNumber, ...rest } = prev;
+        return rest;
+      });
+    }
+  };
 
   const fetchStudents = useCallback(async () => {
     try {
@@ -58,7 +128,7 @@ export default function StudentsScreen() {
   };
 
   const handleAddStudent = async () => {
-    if (!newEmail.trim() || !newFirstName.trim()) return;
+    if (!validateForm()) return;
     setIsSaving(true);
     try {
       await api.post("/students", {
@@ -71,6 +141,7 @@ export default function StudentsScreen() {
       setNewFirstName("");
       setNewLastName("");
       setNewAdmissionNumber("");
+      setValidationErrors({});
       setShowAddForm(false);
       await fetchStudents();
     } catch (err: any) {
@@ -87,6 +158,18 @@ export default function StudentsScreen() {
     const admNo = (s.admissionNumber || "").toLowerCase();
     return name.includes(q) || email.includes(q) || admNo.includes(q);
   });
+
+  if (!canViewStudents) {
+    return (
+      <ThemedView style={styles.container}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: Spacing.four }}>
+          <ThemedText style={{ color: "red", textAlign: "center" }}>
+            Access Denied. You do not have permission to view students.
+          </ThemedText>
+        </View>
+      </ThemedView>
+    );
+  }
 
   return (
     <ThemedView style={styles.container}>
@@ -107,13 +190,22 @@ export default function StudentsScreen() {
               </ThemedText>
             </View>
 
-            {isAdmin && (
+            {canAddStudent && (
               <TouchableOpacity
                 style={[
                   styles.addButton,
                   { backgroundColor: theme.primary },
                 ]}
-                onPress={() => setShowAddForm(!showAddForm)}
+                onPress={() => {
+                  if (showAddForm) {
+                    setNewEmail("");
+                    setNewFirstName("");
+                    setNewLastName("");
+                    setNewAdmissionNumber("");
+                    setValidationErrors({});
+                  }
+                  setShowAddForm(!showAddForm);
+                }}
               >
                 <ThemedText
                   style={{
@@ -142,58 +234,78 @@ export default function StudentsScreen() {
                   {
                     backgroundColor: theme.background,
                     color: theme.text,
-                    borderColor: theme.border,
+                    borderColor: validationErrors.email ? "#EF4444" : theme.border,
                   },
                 ]}
                 placeholder="Email"
                 placeholderTextColor={theme.textSecondary}
                 value={newEmail}
-                onChangeText={setNewEmail}
+                onChangeText={handleEmailChange}
                 autoCapitalize="none"
                 keyboardType="email-address"
               />
+              {validationErrors.email && (
+                <ThemedText style={{ color: "#EF4444", fontSize: 11, marginTop: -Spacing.two, marginBottom: Spacing.two }}>
+                  {validationErrors.email}
+                </ThemedText>
+              )}
               <TextInput
                 style={[
                   styles.input,
                   {
                     backgroundColor: theme.background,
                     color: theme.text,
-                    borderColor: theme.border,
+                    borderColor: validationErrors.firstName ? "#EF4444" : theme.border,
                   },
                 ]}
                 placeholder="First Name"
                 placeholderTextColor={theme.textSecondary}
                 value={newFirstName}
-                onChangeText={setNewFirstName}
+                onChangeText={handleFirstNameChange}
               />
+              {validationErrors.firstName && (
+                <ThemedText style={{ color: "#EF4444", fontSize: 11, marginTop: -Spacing.two, marginBottom: Spacing.two }}>
+                  {validationErrors.firstName}
+                </ThemedText>
+              )}
               <TextInput
                 style={[
                   styles.input,
                   {
                     backgroundColor: theme.background,
                     color: theme.text,
-                    borderColor: theme.border,
+                    borderColor: validationErrors.lastName ? "#EF4444" : theme.border,
                   },
                 ]}
                 placeholder="Last Name"
                 placeholderTextColor={theme.textSecondary}
                 value={newLastName}
-                onChangeText={setNewLastName}
+                onChangeText={handleLastNameChange}
               />
+              {validationErrors.lastName && (
+                <ThemedText style={{ color: "#EF4444", fontSize: 11, marginTop: -Spacing.two, marginBottom: Spacing.two }}>
+                  {validationErrors.lastName}
+                </ThemedText>
+              )}
               <TextInput
                 style={[
                   styles.input,
                   {
                     backgroundColor: theme.background,
                     color: theme.text,
-                    borderColor: theme.border,
+                    borderColor: validationErrors.admissionNumber ? "#EF4444" : theme.border,
                   },
                 ]}
                 placeholder="Admission Number"
                 placeholderTextColor={theme.textSecondary}
                 value={newAdmissionNumber}
-                onChangeText={setNewAdmissionNumber}
+                onChangeText={handleAdmissionNumberChange}
               />
+              {validationErrors.admissionNumber && (
+                <ThemedText style={{ color: "#EF4444", fontSize: 11, marginTop: -Spacing.two, marginBottom: Spacing.two }}>
+                  {validationErrors.admissionNumber}
+                </ThemedText>
+              )}
               <TouchableOpacity
                 style={[
                   styles.submitButton,

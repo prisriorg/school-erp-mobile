@@ -13,17 +13,14 @@ import { ThemedView } from "@/components/themed-view";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useAuthStore } from "@/store/authStore";
+import { usePermission } from "@/hooks/usePermission";
 import { api } from "@/lib/api";
 
 export default function AttendanceScreen() {
-  const user = useAuthStore((state) => state.user);
   const theme = useTheme();
-  const isTeacherOrAdmin = [
-    "admin",
-    "manager",
-    "principal",
-    "teacher",
-  ].includes(user?.role || "");
+  const { hasPermission } = usePermission();
+  const canViewAttendance = hasPermission("ATTENDANCE.VIEW");
+  const canManageAttendance = hasPermission("ATTENDANCE.MANAGE");
 
   const [attendanceData, setAttendanceData] = useState<any>(null);
   const [students, setStudents] = useState<any[]>([]);
@@ -36,8 +33,8 @@ export default function AttendanceScreen() {
     try {
       const [attRes, studRes, clsRes] = await Promise.all([
         api.get("/attendance"),
-        isTeacherOrAdmin ? api.get("/students") : Promise.resolve({ data: [] }),
-        isTeacherOrAdmin ? api.get("/classes") : Promise.resolve({ data: [] }),
+        canManageAttendance ? api.get("/students") : Promise.resolve({ data: [] }),
+        canManageAttendance ? api.get("/classes") : Promise.resolve({ data: [] }),
       ]);
       setAttendanceData(attRes.data);
       setStudents(studRes.data);
@@ -46,7 +43,7 @@ export default function AttendanceScreen() {
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to load attendance");
     }
-  }, [isTeacherOrAdmin]);
+  }, [canManageAttendance]);
 
   useEffect(() => {
     fetchData().finally(() => setIsLoading(false));
@@ -79,6 +76,18 @@ export default function AttendanceScreen() {
   const absentCount = records.filter(
     (r) => r.status === "Absent" || r.status === "absent",
   ).length;
+
+  if (!canViewAttendance) {
+    return (
+      <ThemedView style={styles.container}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: Spacing.four }}>
+          <ThemedText style={{ color: "red", textAlign: "center" }}>
+            Access Denied. You do not have permission to view attendance.
+          </ThemedText>
+        </View>
+      </ThemedView>
+    );
+  }
 
   return (
     <ThemedView style={styles.container}>

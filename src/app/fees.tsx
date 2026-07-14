@@ -14,10 +14,13 @@ import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
+import { usePermission } from "@/hooks/usePermission";
 
 export default function FeesScreen() {
   const theme = useTheme();
   const { user } = useAuthStore();
+  const { hasPermission } = usePermission();
+  const canViewFees = hasPermission("FEES.VIEW");
 
   const [invoices, setInvoices] = useState<
     {
@@ -67,6 +70,18 @@ export default function FeesScreen() {
   const totalDues = invoices
     .filter((inv) => inv.status === "Pending" || inv.status === "pending")
     .reduce((sum: number, inv: any) => sum + Number(inv.amount || 0), 0);
+
+  if (!canViewFees) {
+    return (
+      <ThemedView style={styles.container}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: Spacing.four }}>
+          <ThemedText style={{ color: "red", textAlign: "center" }}>
+            Access Denied. You do not have permission to view fees.
+          </ThemedText>
+        </View>
+      </ThemedView>
+    );
+  }
 
   return (
     <ThemedView style={styles.container}>

@@ -11,10 +11,13 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
+import { usePermission } from "@/hooks/usePermission";
 import { api } from "@/lib/api";
 
 export default function ExamsScreen() {
   const theme = useTheme();
+  const { hasPermission } = usePermission();
+  const canViewExams = hasPermission("EXAMS.VIEW");
 
   const [exams, setExams] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -52,6 +55,18 @@ export default function ExamsScreen() {
   );
   const aggregate =
     totalMax > 0 ? ((totalObtained / totalMax) * 100).toFixed(1) : "—";
+
+  if (!canViewExams) {
+    return (
+      <ThemedView style={styles.container}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: Spacing.four }}>
+          <ThemedText style={{ color: "red", textAlign: "center" }}>
+            Access Denied. You do not have permission to view exams.
+          </ThemedText>
+        </View>
+      </ThemedView>
+    );
+  }
 
   return (
     <ThemedView style={styles.container}>

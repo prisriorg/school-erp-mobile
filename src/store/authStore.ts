@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { api } from "@/lib/api";
 
 export type UserRole =
+  | "super_admin"
   | "admin"
   | "teacher"
   | "student"
@@ -26,6 +27,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   initialize: () => Promise<void>;
+  updateRole: (role: UserRole) => Promise<void>;
 }
 
 const AUTH_USER_KEY = "auth_user";
@@ -92,5 +94,16 @@ export const useAuthStore = create<AuthState>((set) => ({
       // ignore storage errors on logout
     }
     set({ user: null, token: null, isLoading: false });
+  },
+
+  updateRole: async (role: UserRole) => {
+    set((state) => {
+      if (!state.user) return state;
+      const updatedUser = { ...state.user, role };
+      AsyncStorage.setItem(AUTH_USER_KEY, JSON.stringify(updatedUser)).catch((err) =>
+        console.error("Failed to save updated role to storage:", err)
+      );
+      return { user: updatedUser };
+    });
   },
 }));

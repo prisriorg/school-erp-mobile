@@ -15,6 +15,8 @@ import { ThemedText } from "./themed-text";
 import { ThemedView } from "./themed-view";
 import { useTheme } from "@/hooks/use-theme";
 import { useAuthStore } from "@/store/authStore";
+import { usePermission } from "@/hooks/usePermission";
+import { useRolesStore } from "@/store/rolesStore";
 import { Spacing } from "@/constants/theme";
 
 interface AppDrawerProps {
@@ -74,6 +76,10 @@ export function AppDrawer({ visible, onClose }: AppDrawerProps) {
     onClose();
   };
 
+  const { hasPermission } = usePermission();
+  const roles = useRolesStore((state) => state.roles);
+  const updateRole = useAuthStore((state) => state.updateRole);
+
   const role = user?.role || "student";
 
   const menuItems: MenuItem[] = [
@@ -84,148 +90,88 @@ export function AppDrawer({ visible, onClose }: AppDrawerProps) {
     },
   ];
 
-  if (["admin", "manager", "principal"].includes(role)) {
-    menuItems.push(
-      {
-        name: "Students",
-        route: "/students",
-        iconName: { ios: "person.2.fill", android: "person", web: "group" },
+  if (hasPermission("STUDENTS.PROFILE.VIEW")) {
+    menuItems.push({
+      name: "Students",
+      route: "/students",
+      iconName: { ios: "person.2.fill", android: "person", web: "group" },
+    });
+  }
+
+  if (hasPermission("TEACHERS.VIEW")) {
+    menuItems.push({
+      name: "Teachers",
+      route: "/teachers",
+      iconName: {
+        ios: "person.crop.rectangle.fill",
+        android: "person",
+        web: "person",
       },
-      {
-        name: "Teachers",
-        route: "/teachers",
-        iconName: {
-          ios: "person.crop.rectangle.fill",
-          android: "person",
-          web: "person",
-        },
+    });
+  }
+
+  if (hasPermission("ACADEMICS.CLASSES.VIEW")) {
+    menuItems.push({
+      name: "Classes",
+      route: "/classes",
+      iconName: {
+        ios: "rectangle.3.group.fill",
+        android: "apps",
+        web: "apps",
       },
-      {
-        name: "Classes",
-        route: "/classes",
-        iconName: {
-          ios: "rectangle.3.group.fill",
-          android: "apps",
-          web: "apps",
-        },
+    });
+  }
+
+  if (hasPermission("ATTENDANCE.VIEW")) {
+    menuItems.push({
+      name: "Attendance",
+      route: "/attendance",
+      iconName: { ios: "calendar", android: "event", web: "event" },
+    });
+  }
+
+  if (hasPermission("EXAMS.VIEW")) {
+    menuItems.push({
+      name: "Exams & Marks",
+      route: "/exams",
+      iconName: {
+        ios: "doc.text.fill",
+        android: "description",
+        web: "description",
       },
-      {
-        name: "Attendance",
-        route: "/attendance",
-        iconName: { ios: "calendar", android: "event", web: "event" },
+    });
+  }
+
+  if (hasPermission("FEES.VIEW")) {
+    menuItems.push({
+      name: "Finance & Fees",
+      route: "/fees",
+      iconName: {
+        ios: "creditcard.fill",
+        android: "payment",
+        web: "credit_card",
       },
-      {
-        name: "Exams & Marks",
-        route: "/exams",
-        iconName: {
-          ios: "doc.text.fill",
-          android: "description",
-          web: "description",
-        },
+    });
+  }
+
+  if (hasPermission("HR.VIEW")) {
+    menuItems.push({
+      name: "HR & Payroll",
+      route: "/hr",
+      iconName: { ios: "briefcase.fill", android: "work", web: "work" },
+    });
+  }
+
+  if (hasPermission("USERS.VIEW")) {
+    menuItems.push({
+      name: "System Users",
+      route: "/users",
+      iconName: {
+        ios: "person.badge.key.fill",
+        android: "vpn_key",
+        web: "key",
       },
-      {
-        name: "Finance & Fees",
-        route: "/fees",
-        iconName: {
-          ios: "creditcard.fill",
-          android: "payment",
-          web: "credit_card",
-        },
-      },
-      {
-        name: "HR & Payroll",
-        route: "/hr",
-        iconName: { ios: "briefcase.fill", android: "work", web: "work" },
-      },
-      {
-        name: "System Users",
-        route: "/users",
-        iconName: {
-          ios: "person.badge.key.fill",
-          android: "vpn_key",
-          web: "key",
-        },
-      },
-    );
-  } else if (role === "teacher") {
-    menuItems.push(
-      {
-        name: "Students",
-        route: "/students",
-        iconName: { ios: "person.2.fill", android: "person", web: "group" },
-      },
-      {
-        name: "Classes",
-        route: "/classes",
-        iconName: {
-          ios: "rectangle.3.group.fill",
-          android: "apps",
-          web: "apps",
-        },
-      },
-      {
-        name: "Attendance",
-        route: "/attendance",
-        iconName: { ios: "calendar", android: "event", web: "event" },
-      },
-      {
-        name: "Exams & Marks",
-        route: "/exams",
-        iconName: {
-          ios: "doc.text.fill",
-          android: "description",
-          web: "description",
-        },
-      },
-      {
-        name: "HR & Payroll",
-        route: "/hr",
-        iconName: { ios: "briefcase.fill", android: "work", web: "work" },
-      },
-    );
-  } else if (role === "student" || role === "parent") {
-    menuItems.push(
-      {
-        name: "Attendance",
-        route: "/attendance",
-        iconName: { ios: "calendar", android: "event", web: "event" },
-      },
-      {
-        name: "Exams & Marks",
-        route: "/exams",
-        iconName: {
-          ios: "doc.text.fill",
-          android: "description",
-          web: "description",
-        },
-      },
-      {
-        name: "Finance & Fees",
-        route: "/fees",
-        iconName: {
-          ios: "creditcard.fill",
-          android: "payment",
-          web: "credit_card",
-        },
-      },
-    );
-  } else if (role === "accountant") {
-    menuItems.push(
-      {
-        name: "Finance & Fees",
-        route: "/fees",
-        iconName: {
-          ios: "creditcard.fill",
-          android: "payment",
-          web: "credit_card",
-        },
-      },
-      {
-        name: "HR & Payroll",
-        route: "/hr",
-        iconName: { ios: "briefcase.fill", android: "work", web: "work" },
-      },
-    );
+    });
   }
 
   const navigateTo = (route: string) => {
@@ -366,6 +312,33 @@ export function AppDrawer({ visible, onClose }: AppDrawerProps) {
             })}
           </ScrollView>
 
+          {__DEV__ && (
+            <View style={[styles.simulatorContainer, { borderTopColor: theme.border }]}>
+              <ThemedText style={styles.simulatorTitle}>ROLE SIMULATOR</ThemedText>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.simulatorChips}>
+                {roles.map((r) => {
+                  const isSelected = user?.role === r.id;
+                  return (
+                    <TouchableOpacity
+                      key={r.id}
+                      style={[
+                        styles.chip,
+                        {
+                          backgroundColor: isSelected ? theme.backgroundSelected : theme.border,
+                        },
+                      ]}
+                      onPress={() => updateRole(r.id as any)}
+                    >
+                      <ThemedText style={[styles.chipText, { fontWeight: isSelected ? "700" : "400" }]}>
+                        {r.name}
+                      </ThemedText>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          )}
+
           {/* Logout Action */}
           <TouchableOpacity
             style={[styles.logoutBtn, { borderColor: theme.border }]}
@@ -470,5 +443,28 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.three,
     borderWidth: 1,
     borderRadius: Spacing.two,
+  },
+  simulatorContainer: {
+    paddingTop: Spacing.two,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    marginBottom: Spacing.two,
+  },
+  simulatorTitle: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#888",
+    marginBottom: Spacing.one,
+  },
+  simulatorChips: {
+    gap: Spacing.one,
+    paddingVertical: Spacing.one,
+  },
+  chip: {
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.one,
+    borderRadius: 8,
+  },
+  chipText: {
+    fontSize: 11,
   },
 });

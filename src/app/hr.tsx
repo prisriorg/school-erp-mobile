@@ -11,10 +11,13 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
+import { usePermission } from "@/hooks/usePermission";
 import { api } from "@/lib/api";
 
 export default function HRScreen() {
   const theme = useTheme();
+  const { hasPermission } = usePermission();
+  const canViewHR = hasPermission("HR.VIEW");
 
   const [payroll, setPayroll] = useState<any[]>([]);
   const [leaves, setLeaves] = useState<any[]>([]);
@@ -45,6 +48,18 @@ export default function HRScreen() {
     await fetchData();
     setRefreshing(false);
   };
+
+  if (!canViewHR) {
+    return (
+      <ThemedView style={styles.container}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: Spacing.four }}>
+          <ThemedText style={{ color: "red", textAlign: "center" }}>
+            Access Denied. You do not have permission to view HR records.
+          </ThemedText>
+        </View>
+      </ThemedView>
+    );
+  }
 
   return (
     <ThemedView style={styles.container}>

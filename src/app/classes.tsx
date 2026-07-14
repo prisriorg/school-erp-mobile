@@ -11,10 +11,13 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
+import { usePermission } from "@/hooks/usePermission";
 import { api } from "@/lib/api";
 
 export default function ClassesScreen() {
   const theme = useTheme();
+  const { hasPermission } = usePermission();
+  const canViewClasses = hasPermission("ACADEMICS.CLASSES.VIEW");
 
   const [classes, setClasses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,6 +43,18 @@ export default function ClassesScreen() {
     await fetchClasses();
     setRefreshing(false);
   };
+
+  if (!canViewClasses) {
+    return (
+      <ThemedView style={styles.container}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: Spacing.four }}>
+          <ThemedText style={{ color: "red", textAlign: "center" }}>
+            Access Denied. You do not have permission to view classes.
+          </ThemedText>
+        </View>
+      </ThemedView>
+    );
+  }
 
   return (
     <ThemedView style={styles.container}>
