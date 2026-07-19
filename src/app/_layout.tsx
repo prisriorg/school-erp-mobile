@@ -24,6 +24,9 @@ import { ThemedView } from "@/components/themed-view";
 import { useAuthStore } from "@/store/authStore";
 import { Colors, Spacing } from "@/constants/theme";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
 
 SplashScreen.preventAutoHideAsync();
 
@@ -55,8 +58,9 @@ function RootLayoutNav() {
   }, [user, isInitialized, segments, router]);
 
   return (
-    <SafeAreaProvider>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+    <QueryClientProvider client={queryClient}>
+      <SafeAreaProvider>
+        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
         <SafeAreaView style={styles.safeArea}>
           <AnimatedSplashOverlay />
           {!user ? (
@@ -82,17 +86,6 @@ function RootLayoutNav() {
                 <ThemedText type="smallBold" style={styles.navBrand}>
                   Academia ERP
                 </ThemedText>
-
-                <View
-                  style={[
-                    styles.yearTag,
-                    { backgroundColor: themeColors.backgroundSelected },
-                  ]}
-                >
-                  <ThemedText type="code" style={{ fontSize: 10 }}>
-                    AY 2026-27
-                  </ThemedText>
-                </View>
               </ThemedView>
 
               {/* Tab Navigation Content */}
@@ -105,9 +98,10 @@ function RootLayoutNav() {
               />
             </View>
           )}
-        </SafeAreaView>
-      </ThemeProvider>
-    </SafeAreaProvider>
+          </SafeAreaView>
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </QueryClientProvider>
   );
 }
 

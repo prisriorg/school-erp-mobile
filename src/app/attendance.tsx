@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import {
   View,
   StyleSheet,
@@ -15,6 +15,10 @@ import { useTheme } from "@/hooks/use-theme";
 import { useAuthStore } from "@/store/authStore";
 import { usePermission } from "@/hooks/usePermission";
 import { api } from "@/lib/api";
+import { Screen } from "@/components/ui/Screen";
+import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
+import { useQuery } from "@tanstack/react-query";
 
 export default function AttendanceScreen() {
   const theme = useTheme();
@@ -22,38 +26,31 @@ export default function AttendanceScreen() {
   const canViewAttendance = hasPermission("ATTENDANCE.VIEW");
   const canManageAttendance = hasPermission("ATTENDANCE.MANAGE");
 
-  const [attendanceData, setAttendanceData] = useState<any>(null);
-  const [students, setStudents] = useState<any[]>([]);
-  const [classes, setClasses] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchData = useCallback(async () => {
-    try {
+  const {
+    data = {},
+    isLoading,
+    error: queryError,
+    refetch,
+    isRefetching,
+  } = useQuery({
+    queryKey: ["attendance"],
+    queryFn: async () => {
       const [attRes, studRes, clsRes] = await Promise.all([
         api.get("/attendance"),
         canManageAttendance ? api.get("/students") : Promise.resolve({ data: [] }),
         canManageAttendance ? api.get("/classes") : Promise.resolve({ data: [] }),
       ]);
-      setAttendanceData(attRes.data);
-      setStudents(studRes.data);
-      setClasses(clsRes.data);
-      setError(null);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load attendance");
-    }
-  }, [canManageAttendance]);
+      return {
+        attendanceData: attRes.data,
+        students: studRes.data,
+        classes: clsRes.data,
+      };
+    },
+    enabled: canViewAttendance,
+  });
 
-  useEffect(() => {
-    fetchData().finally(() => setIsLoading(false));
-  }, [fetchData]);
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchData();
-    setRefreshing(false);
-  };
+  const { attendanceData = null, students = [], classes = [] } = data as any;
+  const error = queryError ? (queryError as any).response?.data?.message || "Failed to load attendance" : null;
 
   // Build a flat list of recent attendance records for display
   const records: any[] = [];
@@ -79,159 +76,108 @@ export default function AttendanceScreen() {
 
   if (!canViewAttendance) {
     return (
-      <ThemedView style={styles.container}>
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: Spacing.four }}>
-          <ThemedText style={{ color: "red", textAlign: "center" }}>
+      <Screen scrollable={false}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <ThemedText style={{ color: "#ef4444", textAlign: "center" }}>
             Access Denied. You do not have permission to view attendance.
           </ThemedText>
         </View>
-      </ThemedView>
+      </Screen>
     );
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <View style={styles.safeArea}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-        >
-          <View style={styles.header}>
-            <ThemedText type="title">Attendance</ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              Daily Class Register
-            </ThemedText>
-          </View>
-
-          {/* Quick Summary */}
-          <View style={styles.statsRow}>
-            <ThemedView type="backgroundElement" style={styles.statBox}>
-              <ThemedText type="small" themeColor="textSecondary">
-                Present
-              </ThemedText>
-              <ThemedText type="subtitle" style={styles.statNum}>
-                {isLoading ? "..." : presentCount}
-              </ThemedText>
-            </ThemedView>
-            <ThemedView type="backgroundElement" style={styles.statBox}>
-              <ThemedText type="small" themeColor="textSecondary">
-                Absent
-              </ThemedText>
-              <ThemedText type="subtitle" style={styles.statNum}>
-                {isLoading ? "..." : absentCount}
-              </ThemedText>
-            </ThemedView>
-            <ThemedView type="backgroundElement" style={styles.statBox}>
-              <ThemedText type="small" themeColor="textSecondary">
-                Total
-              </ThemedText>
-              <ThemedText type="subtitle" style={styles.statNum}>
-                {isLoading ? "..." : records.length}
-              </ThemedText>
-            </ThemedView>
-          </View>
-
-          {/* Loading / Error */}
-          {isLoading && (
-            <ActivityIndicator
-              size="large"
-              color={theme.text}
-              style={{ marginVertical: Spacing.six }}
-            />
-          )}
-
-          {error && !isLoading && (
-            <ThemedView
-              type="backgroundElement"
-              style={{
-                padding: Spacing.four,
-                borderRadius: Spacing.two,
-                marginBottom: Spacing.four,
-              }}
-            >
-              <ThemedText themeColor="textSecondary">{error}</ThemedText>
-            </ThemedView>
-          )}
-
-          {/* Records List */}
-          {!isLoading && (
-            <>
-              <ThemedText type="smallBold" style={styles.listHeader}>
-                ATTENDANCE RECORDS
-              </ThemedText>
-              <View style={styles.list}>
-                {records.length === 0 && !error && (
-                  <ThemedText
-                    themeColor="textSecondary"
-                    style={{ textAlign: "center", marginTop: Spacing.four }}
-                  >
-                    No attendance records found.
-                  </ThemedText>
-                )}
-                {records.slice(0, 20).map((item, idx) => {
-                  const studentName =
-                    item.student?.firstName && item.student?.lastName
-                      ? `${item.student.firstName} ${item.student.lastName}`
-                      : item.studentName || `Student ${idx + 1}`;
-
-                  const statusNormalized =
-                    (item.status || "").charAt(0).toUpperCase() +
-                    (item.status || "").slice(1).toLowerCase();
-
-                  return (
-                    <ThemedView
-                      key={item._id || idx}
-                      type="backgroundElement"
-                      style={styles.card}
-                    >
-                      <View>
-                        <ThemedText style={styles.studentName}>
-                          {studentName}
-                        </ThemedText>
-                        <ThemedText type="small" themeColor="textSecondary">
-                          {item.date
-                            ? new Date(item.date).toLocaleDateString()
-                            : ""}
-                        </ThemedText>
-                      </View>
-                      <View
-                        style={[
-                          styles.badge,
-                          {
-                            backgroundColor:
-                              statusNormalized === "Present"
-                                ? theme.primary
-                                : statusNormalized === "Absent"
-                                  ? theme.borderSelected
-                                  : theme.backgroundSelected,
-                          },
-                        ]}
-                      >
-                        <ThemedText
-                          type="code"
-                          style={{
-                            color:
-                              statusNormalized === "Present"
-                                ? theme.primaryForeground
-                                : theme.text,
-                            fontWeight: "600",
-                          }}
-                        >
-                          {statusNormalized}
-                        </ThemedText>
-                      </View>
-                    </ThemedView>
-                  );
-                })}
-              </View>
-            </>
-          )}
-        </ScrollView>
+    <Screen refreshing={isRefetching} onRefresh={refetch}>
+      <View style={styles.header}>
+        <ThemedText type="title">Attendance</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          Daily Class Register
+        </ThemedText>
       </View>
-    </ThemedView>
+
+      {/* Quick Summary */}
+      <View style={styles.statsRow}>
+        <Card style={styles.statBox}>
+          <ThemedText type="small" themeColor="textSecondary">
+            Present
+          </ThemedText>
+          <ThemedText type="subtitle" style={styles.statNum}>
+            {isLoading ? "..." : presentCount}
+          </ThemedText>
+        </Card>
+        <Card style={styles.statBox}>
+          <ThemedText type="small" themeColor="textSecondary">
+            Absent
+          </ThemedText>
+          <ThemedText type="subtitle" style={styles.statNum}>
+            {isLoading ? "..." : absentCount}
+          </ThemedText>
+        </Card>
+        <Card style={styles.statBox}>
+          <ThemedText type="small" themeColor="textSecondary">
+            Total
+          </ThemedText>
+          <ThemedText type="subtitle" style={styles.statNum}>
+            {isLoading ? "..." : records.length}
+          </ThemedText>
+        </Card>
+      </View>
+
+      {/* Loading / Error */}
+      {isLoading && (
+        <ActivityIndicator size="large" color={theme.text} style={{ marginVertical: Spacing.six }} />
+      )}
+
+      {error && !isLoading && (
+        <Card style={{ borderColor: "#ef4444", marginBottom: Spacing.four }}>
+          <ThemedText style={{ color: "#ef4444" }}>{error}</ThemedText>
+        </Card>
+      )}
+
+      {/* Records List */}
+      {!isLoading && (
+        <>
+          <ThemedText type="smallBold" style={styles.listHeader}>
+            ATTENDANCE RECORDS
+          </ThemedText>
+          <View style={styles.list}>
+            {records.length === 0 && !error && (
+              <ThemedText themeColor="textSecondary" style={{ textAlign: "center", marginTop: Spacing.four }}>
+                No attendance records found.
+              </ThemedText>
+            )}
+            {records.slice(0, 20).map((item, idx) => {
+              const studentName =
+                item.student?.firstName && item.student?.lastName
+                  ? `${item.student.firstName} ${item.student.lastName}`
+                  : item.studentName || `Student ${idx + 1}`;
+
+              const statusNormalized =
+                (item.status || "").charAt(0).toUpperCase() +
+                (item.status || "").slice(1).toLowerCase();
+
+              const badgeType = statusNormalized === "Present" ? "success" 
+                : statusNormalized === "Absent" ? "error" 
+                : "default";
+
+              return (
+                <Card key={item._id || idx} style={styles.card}>
+                  <View>
+                    <ThemedText style={styles.studentName}>
+                      {studentName}
+                    </ThemedText>
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {item.date ? new Date(item.date).toLocaleDateString() : ""}
+                    </ThemedText>
+                  </View>
+                  <Badge label={statusNormalized} type={badgeType as any} />
+                </Card>
+              );
+            })}
+          </View>
+        </>
+      )}
+    </Screen>
   );
 }
 
@@ -251,24 +197,21 @@ const styles = StyleSheet.create({
   },
   statBox: {
     flex: 1,
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
+    paddingVertical: Spacing.three,
+    paddingHorizontal: Spacing.two,
     alignItems: "center",
   },
   statNum: { fontSize: 22, fontWeight: "700", marginTop: 4 },
-  listHeader: { fontSize: 13, letterSpacing: 0.8, marginBottom: Spacing.two },
-  list: { gap: Spacing.three },
+  listHeader: {
+    fontSize: 13,
+    letterSpacing: 0.8,
+    marginBottom: Spacing.three,
+  },
+  list: { gap: Spacing.two },
   card: {
-    padding: Spacing.four,
-    borderRadius: Spacing.three,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  studentName: { fontSize: 16, fontWeight: "600" },
-  badge: {
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.one,
-    borderRadius: Spacing.two,
-  },
+  studentName: { fontSize: 16, fontWeight: "500" },
 });

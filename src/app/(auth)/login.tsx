@@ -13,6 +13,9 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useAuthStore } from "@/store/authStore";
 import { useTheme } from "@/hooks/use-theme";
+import { Screen } from "@/components/ui/Screen";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 
 export default function LoginScreen() {
   const login = useAuthStore((state) => state.login);
@@ -35,12 +38,8 @@ export default function LoginScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
-      <ScrollView
-        automaticallyAdjustKeyboardInsets
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+    <Screen>
+      <View style={styles.content}>
         {/* Header */}
         <View style={styles.header}>
           <ThemedText type="title" style={styles.brandTitle}>
@@ -54,95 +53,46 @@ export default function LoginScreen() {
         <View style={styles.formContainer}>
           {/* Error Message */}
           {errorMessage && (
-            <View
-              style={[
-                styles.errorBox,
-                { backgroundColor: theme.backgroundElement },
-              ]}
-            >
+            <View style={[styles.errorBox, { backgroundColor: theme.backgroundElement }]}>
               <ThemedText style={styles.errorText}>{errorMessage}</ThemedText>
             </View>
           )}
 
           {/* Email Input */}
-          <ThemedText
-            type="small"
-            themeColor="textSecondary"
-            style={styles.label}
-          >
-            Email Address
-          </ThemedText>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: theme.backgroundElement,
-                color: theme.text,
-                borderColor: theme.border,
-              },
-            ]}
+          <Input
+            label="Email Address"
+            placeholder="you@school.com"
             value={email}
             onChangeText={setEmail}
-            autoCapitalize="none"
             keyboardType="email-address"
-            placeholder="you@school.com"
-            placeholderTextColor={theme.textSecondary}
+            autoCapitalize="none"
           />
 
           {/* Password Input */}
-          <ThemedText
-            type="small"
-            themeColor="textSecondary"
-            style={styles.label}
-          >
-            Password
-          </ThemedText>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: theme.backgroundElement,
-                color: theme.text,
-                borderColor: theme.border,
-              },
-            ]}
+          <Input
+            label="Password"
+            placeholder="Enter your password"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
-            placeholder="Enter your password"
-            placeholderTextColor={theme.textSecondary}
           />
 
           {/* Submit Button */}
           {isLoading ? (
-            <ActivityIndicator
-              size="large"
-              color={theme.text}
-              style={styles.loader}
-            />
+            <ActivityIndicator size="large" color={theme.text} style={styles.loader} />
           ) : (
-            <TouchableOpacity
-              style={[styles.submitButton, { backgroundColor: theme.primary }]}
-              onPress={handleLogin}
-            >
-              <ThemedText
-                style={{ color: theme.primaryForeground, fontWeight: "700" }}
-              >
-                Sign In
-              </ThemedText>
-            </TouchableOpacity>
+            <View style={{ marginTop: 16 }}>
+              <Button title="Sign In" onPress={handleLogin} />
+            </View>
           )}
         </View>
-      </ScrollView>
-    </ThemedView>
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
+  content: {
     flexGrow: 1,
     padding: 24,
     justifyContent: "center",
@@ -164,35 +114,17 @@ const styles = StyleSheet.create({
   formContainer: {
     width: "100%",
     maxWidth: 400,
+    gap: 16,
   },
   errorBox: {
     padding: 12,
     borderRadius: 8,
-    marginBottom: 16,
     borderLeftWidth: 3,
     borderLeftColor: "#e74c3c",
   },
   errorText: {
     color: "#e74c3c",
     fontSize: 14,
-  },
-  label: {
-    marginBottom: 8,
-    marginTop: 12,
-  },
-  input: {
-    height: 48,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    fontSize: 15,
-  },
-  submitButton: {
-    height: 50,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 28,
   },
   loader: {
     marginVertical: 24,

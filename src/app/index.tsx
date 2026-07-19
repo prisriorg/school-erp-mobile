@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   View,
   StyleSheet,
@@ -14,6 +14,11 @@ import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useAuthStore, UserRole } from "@/store/authStore";
 import { api } from "@/lib/api";
+import { Screen } from "@/components/ui/Screen";
+import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { useQuery } from "@tanstack/react-query";
 
 export default function HomeScreen() {
   const user = useAuthStore((state) => state.user);
@@ -23,24 +28,20 @@ export default function HomeScreen() {
 
   const role: UserRole = user?.role || "student";
 
-  const [stats, setStats] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: stats,
+    isLoading,
+    error: queryError,
+    refetch,
+  } = useQuery({
+    queryKey: ["dashboard-stats"],
+    queryFn: async () => {
+      const res = await api.get("/dashboard/stats");
+      return res.data;
+    },
+  });
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await api.get("/dashboard/stats");
-        setStats(res.data);
-        setError(null);
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load dashboard");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchStats();
-  }, []);
+  const error = queryError ? (queryError as any).response?.data?.message || "Failed to load dashboard" : null;
 
   const getDashboardContent = () => {
     switch (role) {
@@ -198,131 +199,107 @@ export default function HomeScreen() {
   const dashboard = getDashboardContent();
 
   return (
-    <ThemedView style={styles.container}>
+    <Screen
+      refreshing={isLoading}
+      onRefresh={refetch}
+    >
       <View style={styles.contentWrapper}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={{ flex: 1 }}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={{ flex: 1 }}>
+            <ThemedText type="small" themeColor="textSecondary">
+              Logged in as {user?.email}
+            </ThemedText>
+            <ThemedText type="title" style={styles.mainTitle}>
+              {dashboard.title}
+            </ThemedText>
+            <ThemedText
+              type="small"
+              themeColor="textSecondary"
+              style={styles.subtitle}
+            >
+              {dashboard.subtitle}
+            </ThemedText>
+          </View>
+          <Badge
+            label={role.toUpperCase()}
+            style={{ marginTop: Spacing.two }}
+          />
+        </View>
+
+        {/* Loading / Error States */}
+        {isLoading && (
+          <ActivityIndicator
+            size="large"
+            color={theme.text}
+            style={{ marginVertical: Spacing.six }}
+          />
+        )}
+
+        {error && !isLoading && (
+          <Card style={{ marginBottom: Spacing.four, borderColor: "#ef4444" }}>
+            <ThemedText style={{ color: "#ef4444" }}>{error}</ThemedText>
+          </Card>
+        )}
+
+        {/* Stats Grid */}
+        <ThemedText type="smallBold" style={styles.sectionHeader}>
+          KEY METRICS
+        </ThemedText>
+        <View style={styles.statsGrid}>
+          {dashboard.stats.map((stat, idx) => (
+            <Card key={idx} style={styles.statCard}>
               <ThemedText type="small" themeColor="textSecondary">
-                Logged in as {user?.email}
+                {stat.label}
               </ThemedText>
-              <ThemedText type="title" style={styles.mainTitle}>
-                {dashboard.title}
+              <ThemedText type="subtitle" style={styles.statValue}>
+                {isLoading ? "..." : stat.value}
               </ThemedText>
               <ThemedText
                 type="small"
                 themeColor="textSecondary"
-                style={styles.subtitle}
+                style={styles.statSubtext}
               >
-                {dashboard.subtitle}
+                {stat.subtext}
               </ThemedText>
-            </View>
-            <View
-              style={[
-                styles.roleBadge,
-                { backgroundColor: theme.backgroundSelected },
-              ]}
+            </Card>
+          ))}
+        </View>
+
+        {/* Available Modules */}
+        <ThemedText type="smallBold" style={styles.sectionHeader}>
+          AVAILABLE MODULES
+        </ThemedText>
+        <View style={styles.modulesContainer}>
+          {dashboard.modules.map((mod, idx) => (
+            <TouchableOpacity
+              key={idx}
+              activeOpacity={0.7}
+              onPress={() => router.push(mod.route as any)}
             >
-              <ThemedText type="code" style={styles.roleBadgeText}>
-                {role.toUpperCase()}
-              </ThemedText>
-            </View>
-          </View>
-
-          {/* Loading / Error States */}
-          {isLoading && (
-            <ActivityIndicator
-              size="large"
-              color={theme.text}
-              style={{ marginVertical: Spacing.six }}
-            />
-          )}
-
-          {error && !isLoading && (
-            <ThemedView
-              type="backgroundElement"
-              style={{
-                padding: Spacing.four,
-                borderRadius: Spacing.two,
-                marginBottom: Spacing.four,
-              }}
-            >
-              <ThemedText themeColor="textSecondary">{error}</ThemedText>
-            </ThemedView>
-          )}
-
-          {/* Stats Grid */}
-          <ThemedText type="smallBold" style={styles.sectionHeader}>
-            KEY METRICS
-          </ThemedText>
-          <View style={styles.statsGrid}>
-            {dashboard.stats.map((stat, idx) => (
-              <ThemedView
-                key={idx}
-                type="backgroundElement"
-                style={styles.statCard}
-              >
-                <ThemedText type="small" themeColor="textSecondary">
-                  {stat.label}
-                </ThemedText>
-                <ThemedText type="subtitle" style={styles.statValue}>
-                  {isLoading ? "..." : stat.value}
-                </ThemedText>
+              <Card style={styles.moduleCard}>
+                <ThemedText style={styles.moduleTitle}>{mod.title}</ThemedText>
                 <ThemedText
                   type="small"
                   themeColor="textSecondary"
-                  style={styles.statSubtext}
+                  style={styles.moduleDesc}
                 >
-                  {stat.subtext}
+                  {mod.desc}
                 </ThemedText>
-              </ThemedView>
-            ))}
-          </View>
+              </Card>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-          {/* Available Modules */}
-          <ThemedText type="smallBold" style={styles.sectionHeader}>
-            AVAILABLE MODULES
-          </ThemedText>
-          <View style={styles.modulesContainer}>
-            {dashboard.modules.map((mod, idx) => (
-              <TouchableOpacity
-                key={idx}
-                activeOpacity={0.7}
-                onPress={() => router.push(mod.route as any)}
-              >
-                <ThemedView
-                  type="backgroundElement"
-                  style={styles.moduleCard}
-                >
-                  <ThemedText style={styles.moduleTitle}>
-                    {mod.title}
-                  </ThemedText>
-                  <ThemedText
-                    type="small"
-                    themeColor="textSecondary"
-                    style={styles.moduleDesc}
-                  >
-                    {mod.desc}
-                  </ThemedText>
-                </ThemedView>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Sign Out */}
-          <TouchableOpacity
-            style={[styles.logoutButton, { borderColor: theme.border }]}
-            onPress={() => logout()}
-          >
-            <ThemedText style={{ fontWeight: "600" }}>Sign Out</ThemedText>
-          </TouchableOpacity>
-        </ScrollView>
+        {/* Sign Out */}
+        <Button
+          variant="outline"
+          title="Sign Out"
+          style={{ marginTop: Spacing.six }}
+          onPress={() => logout()}
+        />
       </View>
-    </ThemedView>
+    </Screen>
   );
 }
 
@@ -353,16 +330,6 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     marginTop: Spacing.half,
-  },
-  roleBadge: {
-    alignSelf: "flex-start",
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.half,
-    borderRadius: Spacing.two,
-    marginTop: Spacing.two,
-  },
-  roleBadgeText: {
-    fontSize: 12,
   },
   sectionHeader: {
     fontSize: 13,
@@ -403,12 +370,5 @@ const styles = StyleSheet.create({
   },
   moduleDesc: {
     lineHeight: 18,
-  },
-  logoutButton: {
-    marginTop: Spacing.six,
-    paddingVertical: Spacing.three,
-    borderWidth: 1,
-    borderRadius: Spacing.two,
-    alignItems: "center",
   },
 });

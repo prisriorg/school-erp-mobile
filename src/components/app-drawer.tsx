@@ -18,6 +18,8 @@ import { useAuthStore } from "@/store/authStore";
 import { usePermission } from "@/hooks/usePermission";
 import { useRolesStore } from "@/store/rolesStore";
 import { Spacing } from "@/constants/theme";
+import { Badge } from "./ui/Badge";
+import { Button } from "./ui/Button";
 
 interface AppDrawerProps {
   visible: boolean;
@@ -262,15 +264,9 @@ export function AppDrawer({ visible, onClose }: AppDrawerProps) {
                 </ThemedText>
               </View>
             </View>
-            <View
-              style={[
-                styles.roleBadge,
-                { backgroundColor: theme.backgroundSelected },
-              ]}
-            >
-              <ThemedText type="code" style={{ fontSize: 11 }}>
-                ROLE: {role.toUpperCase()}
-              </ThemedText>
+            <View style={{ marginTop: 8 }}>
+              <Badge label={`ROLE: ${role.toUpperCase()}`} type="default" />
+              <Badge label="AY 2026-27" type="default" style={{ marginTop: Spacing.one }} />
             </View>
           </ThemedView>
 
@@ -340,24 +336,25 @@ export function AppDrawer({ visible, onClose }: AppDrawerProps) {
           )}
 
           {/* Logout Action */}
-          <TouchableOpacity
-            style={[styles.logoutBtn, { borderColor: theme.border }]}
+          <Button
+            variant="outline"
+            title="Sign Out"
+            icon={
+              <SymbolView
+                name={{
+                  ios: "rectangle.portrait.and.arrow.right",
+                  android: "logout",
+                  web: "logout",
+                }}
+                size={16}
+                tintColor={theme.text}
+              />
+            }
             onPress={() => {
               handleClose();
               logout();
             }}
-          >
-            <SymbolView
-              name={{
-                ios: "rectangle.portrait.and.arrow.right",
-                android: "logout",
-                web: "logout",
-              }}
-              size={16}
-              tintColor={theme.text}
-            />
-            <ThemedText style={{ fontWeight: "600" }}>Sign Out</ThemedText>
-          </TouchableOpacity>
+          />
         </Animated.View>
       </View>
     </Modal>
