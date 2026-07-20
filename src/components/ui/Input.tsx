@@ -8,9 +8,10 @@ interface InputProps extends TextInputProps {
   error?: string;
   containerStyle?: ViewStyle | ViewStyle[];
   inputStyle?: TextStyle | TextStyle[];
+  rightElement?: React.ReactNode;
 }
 
-export function Input({ label, error, containerStyle, inputStyle, ...props }: InputProps) {
+export function Input({ label, error, containerStyle, inputStyle, rightElement, ...props }: InputProps) {
   const theme = useTheme();
 
   return (
@@ -20,19 +21,32 @@ export function Input({ label, error, containerStyle, inputStyle, ...props }: In
           {label}
         </ThemedText>
       )}
-      <TextInput
+      <View
         style={[
-          styles.input,
+          styles.inputWrapper,
           {
             backgroundColor: theme.backgroundElement,
             borderColor: error ? "#ef4444" : theme.border,
-            color: theme.text,
-          },
-          inputStyle as any
+          }
         ]}
-        placeholderTextColor={theme.textMuted}
-        {...props}
-      />
+      >
+        <TextInput
+          style={[
+            styles.input,
+            {
+              color: theme.text,
+            },
+            inputStyle as any
+          ]}
+          placeholderTextColor={theme.textMuted}
+          {...props}
+        />
+        {rightElement && (
+          <View style={styles.rightElementContainer}>
+            {rightElement}
+          </View>
+        )}
+      </View>
       {error && (
         <ThemedText style={styles.errorText}>
           {error}
@@ -50,12 +64,22 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.two,
     fontSize: 14,
   },
+  inputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 8,
+  },
   input: {
+    flex: 1,
     paddingHorizontal: Spacing.four,
     paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1,
     fontSize: 16,
+  },
+  rightElementContainer: {
+    paddingRight: Spacing.four,
+    justifyContent: "center",
+    alignItems: "center",
   },
   errorText: {
     color: "#ef4444",

@@ -6,8 +6,14 @@ import {
   ActivityIndicator,
   TextInput,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { SymbolView } from "expo-symbols";
+import { Ionicons } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -25,6 +31,7 @@ export default function LoginScreen() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleLogin = async () => {
@@ -39,54 +46,96 @@ export default function LoginScreen() {
 
   return (
     <Screen>
-      <View style={styles.content}>
-        {/* Header */}
-        <View style={styles.header}>
-          <ThemedText type="title" style={styles.brandTitle}>
-            School ERP
-          </ThemedText>
-          <ThemedText type="subtitle" style={styles.subtitle}>
-            Sign in to your portal
-          </ThemedText>
-        </View>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.content}>
+              {/* Header */}
+              <View style={styles.header}>
+                <ThemedText type="title" style={styles.brandTitle}>
+                  School ERP
+                </ThemedText>
+                <ThemedText type="subtitle" style={styles.subtitle}>
+                  Sign in to your portal
+                </ThemedText>
+              </View>
 
-        <View style={styles.formContainer}>
-          {/* Error Message */}
-          {errorMessage && (
-            <View style={[styles.errorBox, { backgroundColor: theme.backgroundElement }]}>
-              <ThemedText style={styles.errorText}>{errorMessage}</ThemedText>
+              <View style={styles.formContainer}>
+                {/* Error Message */}
+                {errorMessage && (
+                  <View
+                    style={[
+                      styles.errorBox,
+                      { backgroundColor: theme.backgroundElement },
+                    ]}
+                  >
+                    <ThemedText style={styles.errorText}>
+                      {errorMessage}
+                    </ThemedText>
+                  </View>
+                )}
+
+                {/* Email Input */}
+                <Input
+                  label="Email Address"
+                  placeholder="you@school.com"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+
+                {/* Password Input */}
+                <Input
+                  label="Password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  rightElement={
+                    <TouchableOpacity
+                      onPress={() => setShowPassword(!showPassword)}
+                      style={{ padding: 4 }}
+                    >
+                      <SymbolView
+                        name={{
+                          ios: "eye.circle",
+                          android: showPassword
+                            ? "visibility_off"
+                            : "visibility",
+                          web: showPassword ? "visibility_off" : "visibility",
+                        }}
+                        size={22}
+                        tintColor={theme.textMuted}
+                      />
+                    </TouchableOpacity>
+                  }
+                />
+
+                {/* Submit Button */}
+                {isLoading ? (
+                  <ActivityIndicator
+                    size="large"
+                    color={theme.text}
+                    style={styles.loader}
+                  />
+                ) : (
+                  <View style={{ marginTop: 16 }}>
+                    <Button title="Sign In" onPress={handleLogin} />
+                  </View>
+                )}
+              </View>
             </View>
-          )}
-
-          {/* Email Input */}
-          <Input
-            label="Email Address"
-            placeholder="you@school.com"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-
-          {/* Password Input */}
-          <Input
-            label="Password"
-            placeholder="Enter your password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-
-          {/* Submit Button */}
-          {isLoading ? (
-            <ActivityIndicator size="large" color={theme.text} style={styles.loader} />
-          ) : (
-            <View style={{ marginTop: 16 }}>
-              <Button title="Sign In" onPress={handleLogin} />
-            </View>
-          )}
-        </View>
-      </View>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </Screen>
   );
 }

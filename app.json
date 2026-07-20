@@ -2,7 +2,17 @@
   "expo": {
     "name": "school-erp",
     "slug": "school-erp",
+    "owner": "prisriorg",
     "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0,
+      "url": "https://expo-updates-server.prisriorg.workers.dev/api/manifest?slug=school-erp"
+    },
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "schoolepr",
@@ -33,7 +43,20 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
-      ]
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "buildArchs": [
+              "arm64-v8a"
+            ]
+          }
+        }
+      ],
+      "expo-sharing",
+      "expo-secure-store",
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -42,7 +65,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "d3d80bf9-e688-4989-bfbb-4f183c1aeb54"
+        "projectId": "b97e6c0c-1f64-40ef-a0d6-3b1b097fb967"
       }
     }
   }

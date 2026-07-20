@@ -22,6 +22,7 @@ import { AppDrawer } from "@/components/app-drawer";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useAuthStore } from "@/store/authStore";
+import { useOTAUpdate } from "@/hooks/useOTAUpdate";
 import { Colors, Spacing } from "@/constants/theme";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -40,6 +41,9 @@ function RootLayoutNav() {
   const segments = useSegments();
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // OTA Update: auto-checks for updates on app foreground
+  useOTAUpdate();
 
   useEffect(() => {
     initialize();
