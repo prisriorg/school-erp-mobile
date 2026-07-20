@@ -28,10 +28,9 @@
 #         with:
 #           name: android-build-${{ matrix.profile }}
 #           path: ${{ steps.build.outputs.build-path }}
-on:
-  push:
-    branches:
-      - main
+name: Build
+on: push
+
 jobs:
   build:
     runs-on: ubuntu-latest
