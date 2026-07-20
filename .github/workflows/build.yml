@@ -34,6 +34,10 @@ on: push
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        profile: [development, preview, production]
+
     steps:
       - name: 🏗 Setup repo
         uses: actions/checkout@v3
@@ -59,10 +63,10 @@ jobs:
         run: npm install
 
       - name: 🚀 Build app
-        run: eas build --local --non-interactive --platform android --profile preview
+        run: eas build --local --non-interactive --platform android --profile ${{ matrix.profile }}
 
       - name: Upload Artifact GitHub Action
         uses: actions/upload-artifact@v4
         with:
-          name: assets-for-download
+          name: build-${{ matrix.profile }}
           path: build-*.apk
